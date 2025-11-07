@@ -1,4 +1,4 @@
-**Autor:** Eduard Wagner
+**Autor:** Eduard Wagner</br>
 **Datum der letzten Änderung:** 2025-11-07
 
 # Kontext
@@ -74,4 +74,5 @@ POST /api/register
 * Umgang mit verwaisten Registrierungen?
 * Authentifizierung für Registrierung/API?
 * Einführung des Status „degraded“?
+
 
