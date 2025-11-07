@@ -10,10 +10,17 @@ public class InMemoryServiceRegistry : IServiceRegistry
     private readonly ConcurrentDictionary<string, ServiceInfo> _services = new();
     private readonly ILogger<InMemoryServiceRegistry> _logger;
 
-    public InMemoryServiceRegistry(ILogger<InMemoryServiceRegistry> logger)
+    public InMemoryServiceRegistry(string databaseName, ILogger<InMemoryServiceRegistry> logger)
     {
         _logger = logger;
+        _logger.LogInformation("Initialized InMemory registry (logical DB name: {Database})", databaseName);
     }
+
+    public InMemoryServiceRegistry(ILogger<InMemoryServiceRegistry> logger)
+    : this("WsPulse", logger)
+    {
+    }
+
 
     public Task<ServiceInfo?> FindByNameAsync(string name)
     {

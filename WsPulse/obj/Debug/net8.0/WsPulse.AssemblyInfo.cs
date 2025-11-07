@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WsPulse")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+325e4bf1cb2fb38b514f79b645d3661d4addfb05")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5ba4d1c5b428085e605f88c5c98ff1ad2a5f47d1")]
 [assembly: System.Reflection.AssemblyProductAttribute("WsPulse")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WsPulse")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
