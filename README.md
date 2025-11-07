@@ -61,11 +61,11 @@ POST /api/register
 
 # Entscheidungsergebnis
 
-✅ Einführung von WsPulse (ASP.NET Core)
-✅ Lokale `/api/test`-Checks bleiben als Fallback erhalten
-✅ Services registrieren sich bei WsPulse (Self-Discovery)
-✅ MongoDB speichert Service- und Statusdaten
-✅ Pro Umgebung läuft eine eigene WsPulse-Instanz
+* Einführung von WsPulse (ASP.NET Core)
+* Lokale `/api/test`-Checks bleiben als Fallback erhalten
+* Services registrieren sich bei WsPulse (Self-Discovery)
+* MongoDB speichert Service- und Statusdaten
+* Pro Umgebung läuft eine eigene WsPulse-Instanz
 
 # Offene Fragen
 
@@ -74,3 +74,4 @@ POST /api/register
 * Umgang mit verwaisten Registrierungen?
 * Authentifizierung für Registrierung/API?
 * Einführung des Status „degraded“?
+
