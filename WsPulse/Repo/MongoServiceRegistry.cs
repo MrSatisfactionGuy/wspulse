@@ -12,7 +12,7 @@ public class MongoServiceRegistry : IServiceRegistry
     public MongoServiceRegistry(IMongoClient client, string databaseName, ILogger<MongoServiceRegistry> logger)
     {
         _logger = logger;
-        var db = client.GetDatabase("WsPulse");
+        IMongoDatabase db = client.GetDatabase("WsPulse");
         _collection = db.GetCollection<ServiceInfo>("services");
 
         _logger.LogInformation("Connected to MongoDB database: {DatabaseName}", databaseName);
@@ -30,13 +30,13 @@ public class MongoServiceRegistry : IServiceRegistry
 
     public async Task<IEnumerable<ServiceInfo>> GetAllServicesAsync()
     {
-        var services = await _collection.Find(FilterDefinition<ServiceInfo>.Empty).ToListAsync();
+        List<ServiceInfo> services = await _collection.Find(FilterDefinition<ServiceInfo>.Empty).ToListAsync();
         return services;
     }
 
     public async Task<bool> IsRegisteredAsync(string name)
     {
-        var count = await _collection.CountDocumentsAsync(s => s.Name == name);
+        long count = await _collection.CountDocumentsAsync(s => s.Name == name);
         return count > 0;
     }
 
@@ -50,7 +50,7 @@ public class MongoServiceRegistry : IServiceRegistry
                 return false;
             }
 
-            var filter = Builders<ServiceInfo>.Filter.Eq(s => s.Name, service.Name);
+            FilterDefinition<ServiceInfo> filter = Builders<ServiceInfo>.Filter.Eq(s => s.Name, service.Name);
             await _collection.ReplaceOneAsync(filter, service, new ReplaceOptions { IsUpsert = true });
 
             _logger.LogInformation("Registered or updated {ServiceName} in MongoDB", service.Name);
@@ -67,7 +67,7 @@ public class MongoServiceRegistry : IServiceRegistry
     {
         try
         {
-            var result = await _collection.DeleteOneAsync(s => s.Name == name);
+            DeleteResult result = await _collection.DeleteOneAsync(s => s.Name == name);
 
             if (result.DeletedCount > 0)
             {
@@ -81,6 +81,53 @@ public class MongoServiceRegistry : IServiceRegistry
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error unregistering {ServiceName} from MongoDB", name);
+            return false;
+        }
+    }
+
+    public async Task<bool> UpdateStatusAsync(string name, bool isReachable, DateTime lastCheckedUtc)
+    {
+        try
+        {
+            if (String.IsNullOrWhiteSpace(name)) return false;
+
+            FilterDefinition<ServiceInfo> filter = Builders<ServiceInfo>.Filter.Eq(s => s.Name, name.Trim());
+
+            UpdateDefinition<ServiceInfo> update = Builders<ServiceInfo>.Update
+                .Set(s => s.IsReachable, isReachable)
+                .Set(s => s.LastChecked, lastCheckedUtc);
+
+            UpdateResult result = await _collection.UpdateOneAsync(filter, update);
+
+            return result.MatchedCount > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating status for {ServiceName} in MongoDB", name);
+            return false;
+        }
+    }
+
+    public async Task<bool> UpdateOperationalAsync(string name, bool isOperational, DateTime lastCheckedUtc)
+    {
+        try
+        {
+            if (String.IsNullOrWhiteSpace(name)) return false;
+
+            FilterDefinition<ServiceInfo> filter =
+                Builders<ServiceInfo>.Filter.Eq(s => s.Name.ToLower(), name.Trim().ToLower());
+
+            UpdateDefinition<ServiceInfo> update = Builders<ServiceInfo>.Update
+                .Set(s => s.IsOperational, isOperational)
+                .Set(s => s.LastChecked, lastCheckedUtc);
+
+            UpdateResult result = await _collection.UpdateOneAsync(filter, update);
+
+            return result.MatchedCount > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating operational state for {ServiceName} in MongoDB", name);
             return false;
         }
     }
