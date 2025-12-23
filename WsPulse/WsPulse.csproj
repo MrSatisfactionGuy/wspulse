@@ -6,6 +6,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>e898bf86-c767-4ab2-86a0-d62df294f966</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+	  <DockerfileTag>inpro-electric.de/pulse/webservice</DockerfileTag>
+	  <Version>1.0.0.0</Version>
+
+
   </PropertyGroup>
 
   <ItemGroup>

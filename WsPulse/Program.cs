@@ -1,8 +1,8 @@
 
 using Microsoft.Extensions.Options;
-using MongoDB.Driver;
 using WsPulse.Config;
 using WsPulse.Enums;
+using WsPulse.HostedServices;
 using WsPulse.Interfaces;
 using WsPulse.Repo;
 
@@ -12,7 +12,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        var builder = WebApplication.CreateBuilder(args);
+        WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
         // Configure Sources
         builder.Configuration.AddEnvironmentVariables();
@@ -20,6 +20,9 @@ public class Program
         // Integrate Settings-Class
         builder.Services.Configure<EnvironmentSettings>(
             builder.Configuration.GetSection("EnvironmentSettings"));
+
+        builder.Services.Configure<PollingConfig>(
+            builder.Configuration.GetSection("Polling"));
 
         // Core ASP.NET Features (adding services to the container.)
         builder.Services.AddControllers();
@@ -42,16 +45,26 @@ public class Program
         // auf das InMemory-Repository zurückgegriffen
         builder.Services.AddSingleton<IServiceRegistry>(sp =>
         {
-            var settings = sp.GetRequiredService<IOptions<EnvironmentSettings>>().Value;
-            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+            EnvironmentSettings settings = sp.GetRequiredService<IOptions<EnvironmentSettings>>().Value;
+            ILoggerFactory loggerFactory = sp.GetRequiredService<ILoggerFactory>();
             return RegistryFactory.Create(settings, loggerFactory);
         });
 
+        builder.Services.AddSingleton<IDependencyRegistry, InMemoryDependencyRegistry>();
+
+        builder.Services.AddHttpClient("Polling", (sp, client) =>
+        {
+            PollingConfig polling = sp.GetRequiredService<IOptions<PollingConfig>>().Value;
+            client.Timeout = TimeSpan.FromSeconds(Math.Max(1, polling.TimeoutSeconds));
+        });
+
+        builder.Services.AddHostedService<ServicePollingHostedService>();
+
         // Build Application
-        var app = builder.Build();
+        WebApplication app = builder.Build();
 
         // Configure HTTP Request Pipeline
-        var settings = app.Services.GetRequiredService<IOptions<EnvironmentSettings>>().Value;
+        EnvironmentSettings settings = app.Services.GetRequiredService<IOptions<EnvironmentSettings>>().Value;
 
         // Swagger nur in nicht-produktiven Umgebungen aktivieren
         if (settings.PortainerEnvironment is not PortainerEnvironmentEnum.ProdExtern &&
@@ -67,7 +80,7 @@ public class Program
         }
         else
         {
-            var log = app.Services.GetRequiredService<ILogger<Program>>();
+            ILogger<Program> log = app.Services.GetRequiredService<ILogger<Program>>();
             log.LogInformation("Swagger disabled for {Env} environment.", settings.PortainerEnvironment);
         }
 
@@ -78,7 +91,7 @@ public class Program
         app.MapControllers();
 
         // Startup diagnostics (environment + Mongo state)
-        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        ILogger<Program> logger = app.Services.GetRequiredService<ILogger<Program>>();
         logger.LogInformation("[WsPulse] Startup Diagnostics:");
         logger.LogInformation(" • Environment: {Env}", settings.PortainerEnvironment);
         logger.LogInformation(" • Using Mongo: {MongoActive}",
